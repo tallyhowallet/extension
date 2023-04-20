@@ -16,17 +16,17 @@ import { HexString } from "../../types"
 import { AccountSignerSettings } from "../../ui"
 import { AccountSignerWithId } from "../../signing"
 
-type AddressBookEntry = {
+type ContractAddressBookEntry = {
   network: EVMNetwork
   address: HexString
   name: string
 }
 
-type InMemoryAddressBook = AddressBookEntry[]
-
-const sameAddressBookEntry = (a: AddressOnNetwork, b: AddressOnNetwork) =>
-  normalizeEVMAddress(a.address) === normalizeEVMAddress(b.address) &&
-  sameNetwork(a.network, b.network)
+type CustomAddressBookEntry = {
+  // no network to make custom names global
+  address: HexString
+  name: string
+}
 
 const BUILT_IN_CONTRACTS = [
   {
@@ -96,8 +96,8 @@ interface Events extends ServiceLifecycleEvents {
   preferencesChanges: Preferences
   initializeDefaultWallet: boolean
   initializeSelectedAccount: AddressOnNetwork
+  addressBookEntryModified: AddressOnNetwork & { name: string }
   updateAnalyticsPreferences: AnalyticsPreferences
-  addressBookEntryModified: AddressBookEntry
   updatedSignerSettings: AccountSignerSettings[]
 }
 
@@ -106,9 +106,9 @@ interface Events extends ServiceLifecycleEvents {
  * event when preferences change.
  */
 export default class PreferenceService extends BaseService<Events> {
-  private knownContracts: InMemoryAddressBook = BUILT_IN_CONTRACTS
+  private knownContracts: ContractAddressBookEntry[] = BUILT_IN_CONTRACTS
 
-  private addressBook: InMemoryAddressBook = []
+  private addressBook: CustomAddressBookEntry[] = []
 
   /*
    * Create a new PreferenceService. The service isn't initialized until
@@ -148,38 +148,51 @@ export default class PreferenceService extends BaseService<Events> {
   // TODO Implement the following 6 methods as something stored in the database and user-manageable.
   // TODO Track account names in the UI in the address book.
 
-  addOrEditNameInAddressBook(newEntry: AddressBookEntry): void {
-    const correspondingEntryIndex = this.addressBook.findIndex((entry) =>
-      sameAddressBookEntry(newEntry, entry)
+  addOrEditNameInAddressBook({
+    address,
+    network,
+    name,
+  }: {
+    network: EVMNetwork
+    address: HexString
+    name: string
+  }): void {
+    const newEntry = {
+      address: normalizeEVMAddress(address),
+      name,
+    }
+    const correspondingEntryIndex = this.addressBook.findIndex(
+      (entry) =>
+        normalizeEVMAddress(newEntry.address) ===
+        normalizeEVMAddress(entry.address)
     )
     if (correspondingEntryIndex !== -1) {
       this.addressBook[correspondingEntryIndex] = newEntry
     } else {
-      this.addressBook.push({
-        network: newEntry.network,
-        name: newEntry.name,
-        address: normalizeEVMAddress(newEntry.address),
-      })
+      this.addressBook.push(newEntry)
     }
-    this.emitter.emit("addressBookEntryModified", newEntry)
+    this.emitter.emit("addressBookEntryModified", { ...newEntry, network })
   }
 
   lookUpAddressForName({
     name,
     network,
   }: NameOnNetwork): AddressOnNetwork | undefined {
-    return this.addressBook.find(
-      ({ name: entryName, network: entryNetwork }) =>
-        sameNetwork(network, entryNetwork) && name === entryName
+    const entry = this.addressBook.find(
+      ({ name: entryName }) => name === entryName
     )
+    return entry ? { address: entry.address, network } : undefined
   }
 
-  lookUpNameForAddress(
-    addressOnNetwork: AddressOnNetwork
-  ): NameOnNetwork | undefined {
-    return this.addressBook.find((addressBookEntry) =>
-      sameAddressBookEntry(addressBookEntry, addressOnNetwork)
+  lookUpNameForAddress({
+    address,
+    network,
+  }: AddressOnNetwork): NameOnNetwork | undefined {
+    const entry = this.addressBook.find(
+      ({ address: entryAddress }) =>
+        normalizeEVMAddress(entryAddress) === normalizeEVMAddress(address)
     )
+    return entry ? { name: entry.name, network } : undefined
   }
 
   async lookUpAddressForContractName({

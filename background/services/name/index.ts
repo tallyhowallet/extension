@@ -57,6 +57,7 @@ type ResolvedAvatarRecord = {
 type Events = ServiceLifecycleEvents & {
   resolvedAddress: ResolvedAddressRecord
   resolvedName: ResolvedNameRecord
+  resolvedLocalName: ResolvedNameRecord
   resolvedAvatar: ResolvedAvatarRecord
 }
 
@@ -130,7 +131,6 @@ export default class NameService extends BaseService<Events> {
     preferenceService.emitter.on(
       "addressBookEntryModified",
       async ({ network, address }) => {
-        this.clearNameCacheEntry(network.chainID, address)
         await this.lookUpName({ network, address })
       }
     )
@@ -214,6 +214,52 @@ export default class NameService extends BaseService<Events> {
   ): Promise<ResolvedNameRecord | undefined> {
     const { address, network } = normalizeAddressOnNetwork(addressOnNetwork)
 
+    const workingResolvers = this.resolvers.filter((resolver) =>
+      resolver.canAttemptNameResolution({ address, network })
+    )
+
+    // check local address book
+    const localResolvers = [...workingResolvers].filter(
+      (resolver) =>
+        resolver.type === "tally-address-book" ||
+        resolver.type === "tally-known-contracts"
+    )
+
+    const localResolution = (
+      await Promise.allSettled(
+        localResolvers.map(async (resolver) => ({
+          type: resolver.type,
+          resolved: await resolver.lookUpNameForAddress({ address, network }),
+        }))
+      )
+    )
+      .filter(isFulfilledPromise)
+      .find(({ value: { resolved } }) => resolved !== undefined)?.value
+
+    if (
+      typeof localResolution !== "undefined" &&
+      typeof localResolution.resolved !== "undefined"
+    ) {
+      const { type: system, resolved: nameOnNetwork } = localResolution
+
+      const nameRecord = {
+        from: { addressOnNetwork: { address, network } },
+        resolved: {
+          nameOnNetwork,
+          // TODO Read this from the name service; for now, this avoids infinite
+          // TODO resolution loops.
+          expiresAt: Date.now() + MINIMUM_RECORD_EXPIRY,
+        },
+        system,
+      } as const
+
+      // Emit local names without a network and update all address-network pairs in Redux
+      this.emitter.emit("resolvedLocalName", nameRecord)
+
+      return nameRecord
+    }
+
+    // If there is no local name then look deeper
     if (!this.cachedResolvedNames[network.family][network.chainID]) {
       this.cachedResolvedNames[network.family][network.chainID] = {}
     }
@@ -231,24 +277,15 @@ export default class NameService extends BaseService<Events> {
       }
     }
 
-    const workingResolvers = this.resolvers.filter((resolver) =>
-      resolver.canAttemptNameResolution({ address, network })
-    )
-
-    const localResolvers = [...workingResolvers].filter(
-      (resolver) =>
-        resolver.type === "tally-address-book" ||
-        resolver.type === "tally-known-contracts"
-    )
     const remoteResolvers = [...workingResolvers].filter(
       (resolver) =>
         resolver.type !== "tally-address-book" &&
         resolver.type !== "tally-known-contracts"
     )
 
-    let firstMatchingResolution = (
+    const remoteResolution = (
       await Promise.allSettled(
-        localResolvers.map(async (resolver) => ({
+        remoteResolvers.map(async (resolver) => ({
           type: resolver.type,
           resolved: await resolver.lookUpNameForAddress({ address, network }),
         }))
@@ -257,28 +294,14 @@ export default class NameService extends BaseService<Events> {
       .filter(isFulfilledPromise)
       .find(({ value: { resolved } }) => resolved !== undefined)?.value
 
-    if (!firstMatchingResolution) {
-      firstMatchingResolution = (
-        await Promise.allSettled(
-          remoteResolvers.map(async (resolver) => ({
-            type: resolver.type,
-            resolved: await resolver.lookUpNameForAddress({ address, network }),
-          }))
-        )
-      )
-        .filter(isFulfilledPromise)
-        .find(({ value: { resolved } }) => resolved !== undefined)?.value
-    }
-
     if (
-      firstMatchingResolution === undefined ||
-      firstMatchingResolution.resolved === undefined
+      remoteResolution === undefined ||
+      remoteResolution.resolved === undefined
     ) {
       return undefined
     }
 
-    const { type: resolverType, resolved: nameOnNetwork } =
-      firstMatchingResolution
+    const { type: system, resolved: nameOnNetwork } = remoteResolution
 
     const nameRecord = {
       from: { addressOnNetwork: { address, network } },
@@ -288,7 +311,7 @@ export default class NameService extends BaseService<Events> {
         // TODO resolution loops.
         expiresAt: Date.now() + MINIMUM_RECORD_EXPIRY,
       },
-      system: resolverType,
+      system,
     } as const
 
     const cachedNameOnNetwork = cachedResolvedNameRecord?.resolved.nameOnNetwork
@@ -302,12 +325,6 @@ export default class NameService extends BaseService<Events> {
     }
 
     return nameRecord
-  }
-
-  clearNameCacheEntry(chainId: string, address: HexString): void {
-    if (this.cachedResolvedNames.EVM[chainId]?.[address] !== undefined) {
-      delete this.cachedResolvedNames.EVM[chainId][address]
-    }
   }
 
   async lookUpAvatar(

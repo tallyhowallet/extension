@@ -48,6 +48,7 @@ import {
   deleteAccount,
   loadAccount,
   updateAccountBalance,
+  updateAccountLocalName,
   updateAccountName,
   updateENSAvatar,
 } from "./redux-slices/accounts"
@@ -963,6 +964,19 @@ export default class Main extends BaseService<never> {
         },
       }) => {
         this.store.dispatch(updateAccountName({ ...addressOnNetwork, name }))
+      }
+    )
+    this.nameService.emitter.on(
+      "resolvedLocalName",
+      async ({
+        from: {
+          addressOnNetwork: { address }, // ignore network
+        },
+        resolved: {
+          nameOnNetwork: { name },
+        },
+      }) => {
+        this.store.dispatch(updateAccountLocalName({ address, name }))
       }
     )
     this.nameService.emitter.on(
