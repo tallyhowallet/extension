@@ -39,7 +39,7 @@ import {
 } from "./services"
 
 import { HexString, KeyringTypes, NormalizedEVMAddress } from "./types"
-import { SignedTransaction } from "./networks"
+import { EVMNetwork, SignedTransaction } from "./networks"
 import { AccountBalance, AddressOnNetwork, NameOnNetwork } from "./accounts"
 import { Eligible } from "./services/doggo/types"
 
@@ -140,7 +140,10 @@ import {
   migrateReduxState,
   REDUX_STATE_VERSION,
 } from "./redux-slices/migrations"
-import { PermissionMap } from "./services/provider-bridge/utils"
+import {
+  PermissionMap,
+  ValidatedAddEthereumChainParameter,
+} from "./services/provider-bridge/utils"
 import { TALLY_INTERNAL_ORIGIN } from "./services/internal-ethereum-provider/constants"
 import {
   ActivityDetail,
@@ -1843,6 +1846,16 @@ export default class Main extends BaseService<never> {
       abilityId,
       reason
     )
+  }
+
+  async addCustomNetwork(
+    networkParams: ValidatedAddEthereumChainParameter
+  ): Promise<EVMNetwork> {
+    const customNetwork = await this.chainService.addCustomChain(networkParams)
+
+    this.store.dispatch(setSelectedNetwork(customNetwork))
+
+    return customNetwork
   }
 
   async removeEVMNetwork(chainID: string): Promise<void> {

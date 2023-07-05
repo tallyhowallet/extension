@@ -64,6 +64,24 @@
     }
   },
   "comingSoon": "Coming soon",
+  "customNetworksTab": {
+    "form": {
+      "title": "Add custom network",
+      "subtitle": "Make sure you trust the provider and that details are correct.<br>Adding malicious RPC could result in loss of funds.<br>If you aren't sure of the details of an RPC, we advice using <url>ChainList</url> to add them.",
+      "input.networkName": "Network name",
+      "input.rpc": "RPC URL",
+      "input.chainID": "Chain ID",
+      "input.symbol": "Currency Symbol",
+      "input.blockExplorer": "Block explorer (Optional)",
+      "input.logoURL": "Link to logo (Optional)",
+      "input.isTestnet": "This is a test network",
+      "submit": "Add network"
+    },
+    "success": {
+      "title": "Custom network added!",
+      "subtitle": "You can open your wallet now and check out your new network!"
+    }
+  },
   "dappConnection": {
     "connectToDapp": "Connect to dApp",
     "dappPermissionListTitle": "dApp would get permission to:",
@@ -616,7 +634,8 @@
     "backButtonText": "Back",
     "saveBtn": "Save",
     "closeWindow": "Close window",
-    "copyTextSnackbar": "Copied to clipboard"
+    "copyTextSnackbar": "Copied to clipboard",
+    "invalidValue": "Invalid value"
   },
   "signing": {
     "signatureRequired": "Your signature is required",
@@ -957,7 +976,6 @@
         "SUPPORT_NFT_SEND": "Enable sending NFTs",
         "SUPPORT_ARBITRUM_NOVA": "Enable Arbitrum Nova network",
         "SUPPORT_SWAP_QUOTE_REFRESH": "Enable automatic swap quote updates",
-        "SUPPORT_CUSTOM_NETWORKS": "Show custom network page on settings panel",
         "SUPPORT_CUSTOM_RPCS": "Enable adding custom RPCs",
         "SUPPORT_UNVERIFIED_ASSET": "Enable assets verification"
       }

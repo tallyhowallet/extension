@@ -6,6 +6,7 @@ import { removeChainBalances } from "./accounts"
 import { selectCurrentNetwork } from "./selectors/uiSelectors"
 import { setSelectedNetwork } from "./ui"
 import { createBackgroundAsyncThunk } from "./utils"
+import { ValidatedAddEthereumChainParameter } from "../services/provider-bridge/utils"
 
 type NetworkState = {
   blockHeight: number | null
@@ -93,5 +94,15 @@ export const removeCustomChain = createBackgroundAsyncThunk(
     await dispatch(removeChainBalances(chainID))
 
     return main.removeEVMNetwork(chainID)
+  }
+)
+
+export const addCustomChain = createBackgroundAsyncThunk(
+  "networks/addCustomChain",
+  async (
+    [network]: [ValidatedAddEthereumChainParameter],
+    { extra: { main } }
+  ) => {
+    return main.addCustomNetwork(network)
   }
 )

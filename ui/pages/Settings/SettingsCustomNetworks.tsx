@@ -3,6 +3,7 @@ import { EVMNetwork } from "@tallyho/tally-background/networks"
 import { removeCustomChain } from "@tallyho/tally-background/redux-slices/networks"
 import { selectCustomNetworks } from "@tallyho/tally-background/redux-slices/selectors/networks"
 import React, { ReactElement, useState } from "react"
+import { browser } from "@tallyho/tally-background"
 import { Trans, useTranslation } from "react-i18next"
 import SharedButton from "../../components/Shared/SharedButton"
 import SharedIcon from "../../components/Shared/SharedIcon"
@@ -12,11 +13,8 @@ import SharedPageHeader from "../../components/Shared/SharedPageHeader"
 import SharedSlideUpMenu from "../../components/Shared/SharedSlideUpMenu"
 import { useBackgroundDispatch, useBackgroundSelector } from "../../hooks"
 import { intersperseWith } from "../../utils/lists"
-
-const CHAIN_LIST = {
-  name: "ChainList",
-  url: "https://chainlist.org/",
-}
+import { ADD_CUSTOM_NETWORK } from "../Onboarding/Tabbed/Routes"
+import { CHAIN_LIST } from "../../utils/constants"
 
 export default function SettingsCustomNetworks(): ReactElement {
   const { t } = useTranslation("translation", {
@@ -210,7 +208,14 @@ export default function SettingsCustomNetworks(): ReactElement {
           {isEnabled(FeatureFlags.SUPPORT_CUSTOM_RPCS) && (
             <div className="custom_rpc_wrap">
               <span className="simple_text">{t(`customRPC.description`)}</span>
-              <SharedButton type="tertiary" size="medium" iconSmall="new-tab">
+              <SharedButton
+                type="tertiary"
+                size="medium"
+                iconSmall="new-tab"
+                onClick={() =>
+                  window.open(browser.runtime.getURL(ADD_CUSTOM_NETWORK))
+                }
+              >
                 {t(`customRPC.addBtn`)}
               </SharedButton>
             </div>
