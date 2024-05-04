@@ -91,7 +91,7 @@ export default function NFTsHover(props: {
           font-weight: 500;
           line-height: 16px;
           letter-spacing: 3%;
-          z-index: 1;
+          z-index: var(--z-base);
           transition: opacity 200ms ease-in-out;
         }
         .nft_hover:hover {

@@ -77,7 +77,7 @@ export default function DAppConnectRequest(): ReactElement {
           background-color: var(--green-95);
           height: 100vh;
           width: 100%;
-          z-index: 1000;
+          z-index: var(--z-over-menu);
         }
       `}</style>
       <style jsx global>{`

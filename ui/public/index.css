@@ -18,8 +18,8 @@
   --gold-5: #fdf6ed;
   --white: #d6eae9;
 
-  --error: #FF6666;
-  --error-80: #B04443;
+  --error: #ff6666;
+  --error-80: #b04443;
   --error-20: #372a29;
 
   --success: #20c580;
@@ -41,6 +41,22 @@
 
   --shadow: 0px 16px 16px rgba(0, 33, 30, 0.14),
     0px 6px 8px rgba(0, 33, 30, 0.24), 0px 2px 4px rgba(0, 33, 30, 0.34);
+
+  /* z-index */
+  --z-backdrop: -1;
+  --z-base: 1;
+  --z-settings: 2;
+  --z-expanded: 3;
+  --z-content: 4;
+  --z-section: 5;
+  --z-back-button: 10;
+  --z-footer: 11;
+  --z-tooltip: 20;
+  --z-below-menu: 998;
+  --z-menu: 999;
+  --z-over-menu: 1000;
+  --z-99999: 99999;
+  --z-overflow: 999999999;
 }
 
 ::-webkit-scrollbar {
@@ -50,7 +66,11 @@
 
 body {
   margin: 0;
-  font-family: "Segment", -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+  font-family:
+    "Segment",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
     sans-serif;
   position: relative;
   color: var(--white);

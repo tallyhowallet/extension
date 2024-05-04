@@ -78,7 +78,7 @@ export default function TabBar(): ReactElement {
             align-items: center;
             flex-shrink: 0;
             box-shadow: 0 0 5px rgba(0, 20, 19, 0.5);
-            z-index: 10;
+            z-index: var(--z-back-button);
           }
         `}
       </style>

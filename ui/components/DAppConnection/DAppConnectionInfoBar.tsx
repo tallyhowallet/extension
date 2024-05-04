@@ -77,7 +77,7 @@ function DefaultConnectionPopover({ close }: PopoverProps): ReactElement {
             transparent 30%
           );
 
-          z-index: 4;
+          z-index: var(--z-content;
         }
 
         section {
@@ -167,7 +167,7 @@ function DefaultConnectionPopover({ close }: PopoverProps): ReactElement {
           position: fixed;
           top: 0;
           left: 0;
-          z-index: -1;
+          z-index: var(--z-backdrop);
         }
       `}</style>
     </div>

@@ -45,7 +45,7 @@ export default function WalletSubspaceLink(): ReactElement {
         .subscape_link {
           cursor: pointer;
           position: absolute;
-          z-index: 998; // Above the UI, below the menu
+          z-index: var(--z-below-menu); // Above the UI, below the menu
           right: 0;
           top: 90;
           transform: translateX(0px);

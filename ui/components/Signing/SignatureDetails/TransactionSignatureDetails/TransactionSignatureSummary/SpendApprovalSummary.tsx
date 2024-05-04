@@ -257,7 +257,7 @@ export default function SpendApprovalSummary({
             margin-bottom: 16px;
           }
           .asset_icon_wrap {
-            z-index: 1;
+            z-index: var(--z-base);
           }
           .site {
             color: #fff;

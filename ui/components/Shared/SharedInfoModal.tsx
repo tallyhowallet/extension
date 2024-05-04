@@ -38,7 +38,7 @@ export default function SharedInfoModal({
           position: absolute;
           justify-content: center;
           align-items: center;
-          z-index: 3;
+          z-index: var(--z-expnaded);
         }
 
         @keyframes slideup {
@@ -55,14 +55,14 @@ export default function SharedInfoModal({
           height: 100vh;
           background: #001413;
           position: absolute;
-          z-index: 3;
+          z-index: var(--z-expnaded);
         }
         .content {
           width: 70vw;
           height: 70vh;
           padding: 24px;
           background: #001413;
-          z-index: 4;
+          z-index: var(--z-content;
           text-align: center;
           display: flex;
           flex-flow: column;
@@ -93,7 +93,7 @@ export default function SharedInfoModal({
           padding: 0px 17px;
           margin-bottom: 16px;
           margin-right: 8px;
-          z-index: 2;
+          z-index: var(--z-settings);
         }
       `}</style>
     </>

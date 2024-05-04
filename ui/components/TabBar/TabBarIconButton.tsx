@@ -89,7 +89,7 @@ export default function TabBarIconButton(
             top: -2px;
             background: var(--hunter-green);
             position: absolute;
-            z-index: 1;
+            z-index: var(--z-base);
             display: flex;
             justify-content: center;
             align-items: center;

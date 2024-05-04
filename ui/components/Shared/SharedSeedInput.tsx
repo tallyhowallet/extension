@@ -100,7 +100,7 @@ export default function SharedSeedInput(props: Props): ReactElement {
           color: var(--trophy-gold);
           background: var(--hunter-green);
           transition: all 0.2s ease-in-out;
-          z-index: 999;
+          z-index: var(--z-menu);
         }
 
         #recovery_phrase:focus {

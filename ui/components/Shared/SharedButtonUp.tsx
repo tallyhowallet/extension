@@ -56,7 +56,7 @@ export default function SharedButtonUp<T extends HTMLElement>(props: {
           display: flex;
           justify-content: center;
           align-items: center;
-          z-index: 3;
+          z-index: var(--z-expnaded);
           opacity: 1;
           transition: opacity 100ms ease-in;
         }

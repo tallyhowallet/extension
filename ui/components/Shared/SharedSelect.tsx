@@ -167,7 +167,7 @@ export default function SharedSelect(props: Props): ReactElement {
 
           .button {
             position: relative;
-            z-index: 1;
+            z-index: var(--z-base);
             box-sizing: border-box;
             display: flex;
             justify-content: space-between;
@@ -235,7 +235,7 @@ export default function SharedSelect(props: Props): ReactElement {
             transition:
               max-height 0.2s ease-in-out,
               opacity 0.2s ease-in-out;
-            z-index: 1;
+            z-index: var(--z-base);
           }
 
           .select.bottom .options {

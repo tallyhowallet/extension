@@ -49,7 +49,7 @@ const styles = css`
 
   .wrapper {
     position: relative;
-    z-index: 1;
+    z-index: var(--z-base);
   }
 
   .confetti {

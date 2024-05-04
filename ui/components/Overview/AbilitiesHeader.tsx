@@ -109,7 +109,7 @@ export default function AbilitiesHeader(): null /* ReactElement */ {
             );
 
           position: relative;
-          z-index: 1;
+          z-index: var(--z-base);
         }
 
         .small_banner:before {
@@ -127,7 +127,7 @@ export default function AbilitiesHeader(): null /* ReactElement */ {
           position: absolute;
           content: "";
           inset: 0;
-          z-index: -1;
+          z-index: var(--z-backdrop);
           opacity: 0;
           transition: opacity 0.25s ease-in;
         }

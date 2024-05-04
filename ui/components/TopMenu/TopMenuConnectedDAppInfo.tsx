@@ -280,7 +280,7 @@ export default function TopMenuConnectedDAppInfo(props: {
           border-radius: 16px;
           background-color: rgba(0, 37, 34, 0.71);
           position: fixed;
-          z-index: 99999;
+          z-index: var(--z-99999);
           top: 55px;
           left: 0px;
         }
@@ -314,7 +314,7 @@ export default function TopMenuConnectedDAppInfo(props: {
           position: absolute;
           right: 33px;
           background-color: var(--green-20);
-          z-index: 1;
+          z-index: var(--z-base);
           margin-top: 17px;
         }
         .void_space {
@@ -323,7 +323,7 @@ export default function TopMenuConnectedDAppInfo(props: {
           position: fixed;
           top: 0;
           left: 0;
-          z-index: -1;
+          z-index: var(--z-backdrop);
         }
         h1 {
           color: var(--${isConnected ? "success" : "green-20"});

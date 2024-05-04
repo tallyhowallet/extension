@@ -81,7 +81,7 @@ export default function Snackbar({
         {`
           .snackbar_container {
             position: fixed;
-            z-index: 999999999;
+            z-index: var(--z-overflow);
             bottom: 72px;
             left: 0;
             right: 0;

@@ -39,7 +39,7 @@ export default function CorePage(props: Props): ReactElement {
             height: 100%;
           }
           .top_menu_wrap {
-            z-index: 10;
+            z-index: var(--z-back-button);
             cursor: default;
           }
         `}

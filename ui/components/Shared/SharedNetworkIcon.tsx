@@ -91,7 +91,7 @@ export default function SharedNetworkIcon(props: {
           height: ${size - padding}px;
           width: ${size - padding}px;
           border-radius: 4px;
-          z-index: 1;
+          z-index: var(--z-base);
         }
       `}</style>
     </div>

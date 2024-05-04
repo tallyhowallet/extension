@@ -146,7 +146,7 @@ export default function EarnDepositedCard({
               display: flex;
             }
             .single_icon_first {
-              z-index: 2;
+              z-index: var(--z-settings);
             }
             .multiple_icons div {
               margin: 0 -8px;

@@ -601,7 +601,7 @@ export default function Swap(): ReactElement {
             margin-top: -5px;
             margin-bottom: -32px;
             position: relative;
-            z-index: 1;
+            z-index: var(--z-base);
             font-size: 0;
           }
           .settings_wrap {
@@ -611,7 +611,7 @@ export default function Swap(): ReactElement {
             position: absolute;
             margin-left: -1px;
             margin-top: -4px;
-            z-index: 10;
+            z-index: var(--z-back-button);
           }
         `}
       </style>

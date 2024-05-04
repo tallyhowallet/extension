@@ -62,7 +62,7 @@ function SigningLoaded<T extends SignOperationType>({
             flex-direction: column;
             align-items: center;
             background-color: var(--green-95);
-            z-index: 5;
+            z-index: var(--z-section);
           }
           section :global(h1.title) {
             color: var(--trophy-gold);

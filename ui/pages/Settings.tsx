@@ -346,7 +346,7 @@ export default function Settings(): ReactElement {
           {`
             .select_wrapper {
               width: 118px;
-              z-index: 2;
+              z-index: var(--z-settings);
             }
           `}
         </style>

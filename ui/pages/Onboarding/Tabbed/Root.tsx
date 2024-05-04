@@ -139,7 +139,7 @@ function Navigation({
         .back_button {
           position: absolute;
           margin-top: 20px;
-          z-index: 1;
+          z-index: var(--z-base);
         }
       `}</style>
     </section>

@@ -311,7 +311,7 @@ export default function Send(): ReactElement {
             position: absolute;
             margin-left: -1px;
             margin-top: -4px;
-            z-index: 10;
+            z-index: var(--z-back-button);
           }
           .header {
             display: flex;

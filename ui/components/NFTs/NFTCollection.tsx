@@ -188,7 +188,7 @@ export default function NFTCollection(props: {
         }
         .nft_collection.expanded {
           width: 352px;
-          z-index: 3;
+          z-index: var(--z-expnaded);
           margin: 8px -16px;
           padding: 8px 16px 6px;
           background: var(--green-120);

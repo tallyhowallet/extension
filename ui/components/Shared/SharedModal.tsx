@@ -60,7 +60,7 @@ export default function SharedModal({
             left: 0;
             right: 0;
             bottom: 0;
-            z-index: 999;
+            z-index: var(--z-menu);
             align-items: center;
             justify-content: center;
           }
@@ -80,7 +80,7 @@ export default function SharedModal({
             position: relative;
             display: flex;
             align-items: center;
-            z-index: 1;
+            z-index: var(--z-base);
             box-sizing: border-box;
             width: ${width || "312px"};
             background-color: ${bgColor || "var(--green-120)"};
@@ -104,7 +104,7 @@ export default function SharedModal({
             right: 16px;
             top: 16px;
             background-color: var(--green-20);
-            z-index: 1;
+            z-index: var(--z-base);
           }
           .modal_body {
             min-height: 320px;

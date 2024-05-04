@@ -85,7 +85,7 @@ export default function ClaimFooter({
           footer {
             position: relative;
             width: 352px;
-            z-index: 2;
+            z-index: var(--z-settings);
             display: flex;
             justify-content: space-between;
             align-items: center;

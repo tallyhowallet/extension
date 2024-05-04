@@ -235,7 +235,7 @@ export default function NewCustomNetworkRequest(): JSX.Element | null {
           padding: 4px;
           margin-right: -4px;
           margin-left: -4px;
-          z-index: 1;
+          z-index: var(--z-base);
         }
 
         form {

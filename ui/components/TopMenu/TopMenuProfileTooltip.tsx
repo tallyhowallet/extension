@@ -16,7 +16,7 @@ export default function TopMenuProfileTooltip(props: {
           display: flex;
           align-items: center;
           position: absolute;
-          z-index: 999999999;
+          z-index: var(--z-overflow);
           cursor: pointer;
           bottom: -30px;
           right: 0;

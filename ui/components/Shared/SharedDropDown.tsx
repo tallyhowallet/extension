@@ -133,7 +133,7 @@ function DropdownContent({ children }: ContentProps): ReactElement {
             left: 100%;
             transform: translateX(calc(-100%));
             width: max-content;
-            z-index: 10;
+            z-index: var(--z-back-button);
             padding: 0;
             background: none;
             border: none;
@@ -235,7 +235,7 @@ export default function SharedDropdown({
                     background-color: var(--green-120);
                     width: 212px;
                     border-radius: 4px;
-                    z-index: 1;
+                    z-index: var(--z-base);
 
                     box-shadow:
                       0px 2px 4px 0px #00141357,

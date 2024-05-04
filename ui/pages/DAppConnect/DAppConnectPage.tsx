@@ -108,7 +108,7 @@ export default function DAppConnectPage({
           background-color: var(--green-95);
           height: 100vh;
           width: 100vw;
-          z-index: 1000;
+          z-index: var(--z-over-menu);
         }
         h1 {
           color: var(--trophy-gold);
@@ -159,7 +159,7 @@ export default function DAppConnectPage({
           margin-left: 28px;
           margin-top: -19px;
           margin-bottom: -10px;
-          z-index: 3;
+          z-index: var(--z-expnaded);
         }
         .footer_actions {
           position: fixed;
