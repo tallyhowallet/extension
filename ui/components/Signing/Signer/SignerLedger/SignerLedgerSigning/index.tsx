@@ -176,6 +176,10 @@ export default function SignerLedgerSigning<T extends SignOperationType>({
     return <SignerLedgerSigningTypedData typedData={request.typedData} />
   }
 
+  if ("plumeVersion" in request) {
+    throw new Error("PLUME signing is not supported by Ledger.")
+  }
+
   return (
     <SignerLedgerSigningTransaction
       transactionRequest={request}

@@ -9,6 +9,7 @@ import {
   SignOperation,
   SignOperationType,
   signTypedData,
+  signPLUME,
 } from "@tallyho/tally-background/redux-slices/signing"
 import {
   rejectTransactionSignature,
@@ -16,6 +17,7 @@ import {
 } from "@tallyho/tally-background/redux-slices/transaction-construction"
 import {
   MessageSigningRequest,
+  PLUMESigningRequest,
   SignTypedDataRequest,
 } from "@tallyho/tally-background/utils/signing"
 import { AccountSigner } from "@tallyho/tally-background/services/signing"
@@ -24,6 +26,7 @@ import { AnyAction } from "redux"
 import TransactionSignatureDetails from "./TransactionSignatureDetails"
 import MessageDataSignatureDetails from "./DataSignatureDetails/MessageDataSignatureDetails"
 import TypedDataSignatureDetails from "./DataSignatureDetails/TypedDataSignatureDetails"
+import PLUMESignatureDetails from "./DataSignatureDetails/PLUMESignatureDetails"
 
 /**
  * Details regarding a signature request, resolved for a signer ahead of time
@@ -105,6 +108,20 @@ export function resolveTypedDataSignatureDetails({
   }
 }
 
+export function resolvePLUMESignatureDetails({
+  request,
+  accountSigner,
+}: SignOperation<PLUMESigningRequest>): ResolvedSignatureDetails {
+  return {
+    signer: accountSigner,
+    signingAddress: request.account,
+    signingActionLabelI18nKey: "signTransaction.confirmButtonLabel",
+    renderedSigningData: <PLUMESignatureDetails PLUMERequest={request} />,
+    signActionCreator: () => signPLUME({ request, accountSigner }),
+    rejectActionCreator: rejectDataSignature,
+  }
+}
+
 // Takes a signing request and resolves the signer that should be used to sign
 // it and the details of signing data for user presentation.
 export function resolveSignatureDetails<T extends SignOperationType>({
@@ -116,6 +133,9 @@ export function resolveSignatureDetails<T extends SignOperationType>({
   }
   if ("typedData" in request) {
     return resolveTypedDataSignatureDetails({ request, accountSigner })
+  }
+  if ("plumeVersion" in request) {
+    return resolvePLUMESignatureDetails({ request, accountSigner })
   }
   return resolveTransactionSignatureDetails({ request, accountSigner })
 }

@@ -4,6 +4,7 @@ import HDKeyring, { SerializedHDKeyring } from "@tallyho/hd-keyring"
 
 import { arrayify } from "ethers/lib/utils"
 import { Wallet } from "ethers"
+import { computeAllInputs } from "plume-sig"
 import { normalizeEVMAddress, sameEVMAddress } from "../../lib/utils"
 import { ServiceCreatorFunction, ServiceLifecycleEvents } from "../types"
 import {
@@ -29,6 +30,7 @@ import { AddressOnNetwork } from "../../accounts"
 import logger from "../../lib/logger"
 import PreferenceService from "../preferences"
 import { DEFAULT_AUTOLOCK_INTERVAL } from "../preferences/defaults"
+import { PLUMESigningResponse } from "../../utils/signing"
 
 export enum SignerInternalTypes {
   mnemonicBIP39S128 = "mnemonic#bip39:128",
@@ -1015,6 +1017,64 @@ export default class InternalSignerService extends BaseService<Events> {
       }
 
       return signature
+    } catch (error) {
+      throw new Error("Signing data failed")
+    }
+  }
+
+  /**
+   * Generate a Pseudonymously Linked Unique Message Entity based on EIP-7524 with the usage of eth_getPlumeSignature method,
+   * more information about the EIP can be found at https://eips.ethereum.org/EIPS/eip-7524
+   *
+   * @param message - the message to generate a PLUME for
+   * @param account - signers account address
+   */
+  async generatePLUME({
+    message,
+    account,
+    version,
+  }: {
+    message: string
+    account: HexString
+    version?: number
+  }): Promise<PLUMESigningResponse> {
+    this.requireUnlocked()
+    const signerWithType = this.#findSigner(account)
+
+    if (!signerWithType) {
+      throw new Error(
+        `PLUME generation failed. Signer for address ${account} was not found.`,
+      )
+    }
+
+    try {
+      let privateKey
+      if (isPrivateKey(signerWithType)) {
+        privateKey = signerWithType.signer.privateKey
+      } else {
+        privateKey = await signerWithType.signer.exportPrivateKey(
+          account,
+          "I solemnly swear that I am treating this private key material with great care.",
+        )
+      }
+      if (!privateKey) {
+        throw new Error("Private key unavailable")
+      }
+      if (privateKey.startsWith("0x")) {
+        privateKey = privateKey.substring(2)
+      }
+
+      const { plume, s, publicKey, c, gPowR, hashMPKPowR } =
+        await computeAllInputs(message, privateKey, undefined, version)
+
+      return {
+        plume: `0x${plume.toHex(true)}`,
+        publicKey: `0x${Buffer.from(publicKey).toString("hex")}`,
+        hashMPKPowR: `0x${hashMPKPowR.toHex(true)}`,
+        gPowR: `0x${gPowR.toHex(true)}`,
+        c: `0x${c}`,
+        s: `0x${s}`,
+      }
     } catch (error) {
       throw new Error("Signing data failed")
     }

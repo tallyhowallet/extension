@@ -117,9 +117,16 @@ import {
   signingSliceEmitter,
   typedDataRequest,
   signDataRequest,
+  getPLUMESignatureRequest,
+  signedPLUME,
 } from "./redux-slices/signing"
 
-import { SignTypedDataRequest, MessageSigningRequest } from "./utils/signing"
+import {
+  SignTypedDataRequest,
+  MessageSigningRequest,
+  PLUMESigningRequest,
+  PLUMESigningResponse,
+} from "./utils/signing"
 import {
   emitter as earnSliceEmitter,
   setVaultsAsStale,
@@ -134,6 +141,7 @@ import { ETHEREUM, FLASHBOTS_RPC_URL, OPTIMISM, USD } from "./constants"
 import { clearApprovalInProgress, clearSwapQuote } from "./redux-slices/0x-swap"
 import {
   AccountSigner,
+  PLUMESignatureResponse,
   SignatureResponse,
   TXSignatureResponse,
 } from "./services/signing"
@@ -1003,6 +1011,18 @@ export default class Main extends BaseService<never> {
         this.store.dispatch(signedDataAction(signedData))
       },
     )
+    signingSliceEmitter.on(
+      "requestSignPLUME",
+      async ({ rawSigningData, account, accountSigner, plumeVersion }) => {
+        const signedData = await this.signingService.signPLUME(
+          account,
+          rawSigningData,
+          accountSigner,
+          plumeVersion,
+        )
+        this.store.dispatch(signedPLUME(signedData))
+      },
+    )
 
     this.chainService.emitter.on(
       "blockPrices",
@@ -1361,6 +1381,61 @@ export default class Main extends BaseService<never> {
         }
 
         this.signingService.emitter.on("signingDataResponse", handleAndClear)
+
+        signingSliceEmitter.on("signatureRejected", rejectAndClear)
+      },
+    )
+    this.internalEthereumProviderService.emitter.on(
+      "getPLUMESignatureRequest",
+      async ({
+        payload,
+        resolver,
+        rejecter,
+      }: {
+        payload: PLUMESigningRequest
+        resolver: (
+          result: PLUMESigningResponse | PromiseLike<PLUMESigningResponse>,
+        ) => void
+        rejecter: () => void
+      }) => {
+        await this.signingService.prepareForSigningRequest()
+
+        this.store.dispatch(getPLUMESignatureRequest(payload))
+
+        const clear = () => {
+          this.signingService.emitter.off(
+            "PLUMESigningResponse",
+            // Mutual dependency to handleAndClear.
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
+            handleAndClear,
+          )
+
+          signingSliceEmitter.off(
+            "signatureRejected",
+            // Mutual dependency to rejectAndClear.
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
+            rejectAndClear,
+          )
+        }
+
+        const handleAndClear = (response: PLUMESignatureResponse) => {
+          clear()
+          switch (response.type) {
+            case "success-data":
+              resolver(response.plume)
+              break
+            default:
+              rejecter()
+              break
+          }
+        }
+
+        const rejectAndClear = () => {
+          clear()
+          rejecter()
+        }
+
+        this.signingService.emitter.on("PLUMESigningResponse", handleAndClear)
 
         signingSliceEmitter.on("signatureRejected", rejectAndClear)
       },

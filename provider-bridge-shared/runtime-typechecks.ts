@@ -67,6 +67,7 @@ export const AllowedQueryParamPage = {
   dappPermission: "/dapp-permission",
   signData: "/sign-data",
   personalSignData: "/personal-sign",
+  SignPLUMEData: "/sign-plume",
 } as const
 
 export type AllowedQueryParamPageType =

@@ -15,6 +15,7 @@ import { ServiceCreatorFunction, ServiceLifecycleEvents } from "../types"
 import ChainService from "../chain"
 import { AddressOnNetwork } from "../../accounts"
 import { assertUnreachable } from "../../lib/utils/type-guards"
+import { PLUMESigningResponse } from "../../utils/signing"
 
 type SigningErrorReason = "userRejected" | "genericError"
 type ErrorResponse = {
@@ -36,10 +37,18 @@ export type SignatureResponse =
     }
   | ErrorResponse
 
+export type PLUMESignatureResponse =
+  | {
+      type: "success-data"
+      plume: PLUMESigningResponse
+    }
+  | ErrorResponse
+
 type Events = ServiceLifecycleEvents & {
   signingTxResponse: TXSignatureResponse
   signingDataResponse: SignatureResponse
   personalSigningResponse: SignatureResponse
+  PLUMESigningResponse: PLUMESignatureResponse
 }
 
 /**
@@ -346,6 +355,61 @@ export default class SigningService extends BaseService<Events> {
         }
       }
       this.emitter.emit("personalSigningResponse", {
+        type: "error",
+        reason: "genericError",
+      })
+      throw err
+    }
+  }
+
+  async signPLUME(
+    addressOnNetwork: AddressOnNetwork,
+    dataToSign: string,
+    accountSigner: AccountSigner,
+    version?: number,
+  ): Promise<PLUMESigningResponse> {
+    try {
+      let plume: PLUMESigningResponse
+      switch (accountSigner.type) {
+        case "ledger":
+          throw new Error(
+            "Ledger does not currently support generating PLUMEs.",
+          )
+          break
+        case "private-key":
+        case "keyring":
+          plume = await this.internalSignerService.generatePLUME({
+            message: dataToSign,
+            account: addressOnNetwork.address,
+            version,
+          })
+          break
+        case "read-only":
+          throw new Error("Read-only signers cannot sign.")
+        default:
+          assertUnreachable(accountSigner)
+      }
+
+      this.emitter.emit("PLUMESigningResponse", {
+        type: "success-data",
+        plume,
+      })
+      return plume
+    } catch (err) {
+      if (err instanceof TransportStatusError) {
+        const transportError = err as Error & { statusCode: number }
+        switch (transportError.statusCode) {
+          case StatusCodes.CONDITIONS_OF_USE_NOT_SATISFIED:
+            this.emitter.emit("PLUMESigningResponse", {
+              type: "error",
+              reason: "userRejected",
+            })
+            throw err
+          default:
+            break
+        }
+      }
+      this.emitter.emit("PLUMESigningResponse", {
         type: "error",
         reason: "genericError",
       })

@@ -536,6 +536,15 @@ export default class ProviderBridgeService extends BaseService<Events> {
             origin,
             showExtensionPopup(AllowedQueryParamPage.signData),
           )
+        case "eth_getPlumeSignature":
+          checkPermissionSign(params[1] as HexString, enablingPermission)
+
+          return await this.routeSafeRequest(
+            method,
+            params,
+            origin,
+            showExtensionPopup(AllowedQueryParamPage.SignPLUMEData),
+          )
         case "eth_sign":
           checkPermissionSign(params[0] as HexString, enablingPermission)
 

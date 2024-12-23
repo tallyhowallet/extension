@@ -72,6 +72,21 @@ export type EIP2612TypedData = {
   // FIXME Add network info.
 }
 
+export type PLUMESigningRequest = {
+  account: AddressOnNetwork
+  rawSigningData: string
+  plumeVersion: number
+}
+
+export type PLUMESigningResponse = {
+  plume: HexString
+  c: HexString
+  s: HexString
+  publicKey: HexString
+  gPowR: HexString
+  hashMPKPowR: HexString
+}
+
 const checkEIP4361: (message: string) => EIP4361Data | undefined = (
   message,
 ) => {

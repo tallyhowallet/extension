@@ -3,6 +3,7 @@ import Wallet from "../pages/Wallet"
 import SignTransaction from "../pages/SignTransaction"
 import SignData from "../pages/SignData"
 import PersonalSign from "../pages/PersonalSign"
+import PLUMESign from "../pages/PLUMESign"
 import Overview from "../pages/Overview"
 import SingleAsset from "../pages/SingleAsset"
 import Earn from "../pages/Earn"
@@ -82,6 +83,13 @@ const pageList: PageList[] = [
   {
     path: "/personal-sign",
     Component: PersonalSign,
+    hasTabBar: false,
+    hasTopBar: false,
+    persistOnClose: true,
+  },
+  {
+    path: "/sign-plume",
+    Component: PLUMESign,
     hasTabBar: false,
     hasTopBar: false,
     persistOnClose: true,

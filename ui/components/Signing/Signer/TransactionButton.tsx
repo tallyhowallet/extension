@@ -1,5 +1,6 @@
 import React, { ReactElement, useEffect, useRef, useState } from "react"
 import {
+  selectPLUMESigningData,
   selectSigningData,
   selectTypedData,
 } from "@tallyho/tally-background/redux-slices/signing"
@@ -33,7 +34,9 @@ export default function TransactionButton({
 
   const signDataRequest = useBackgroundSelector(selectSigningData)
   const typedDataRequest = useBackgroundSelector(selectTypedData)
-  const hasSigningRequest = signDataRequest || typedDataRequest
+  const PLUMESignatureRequest = useBackgroundSelector(selectPLUMESigningData)
+  const hasSigningRequest =
+    signDataRequest || typedDataRequest || PLUMESignatureRequest
 
   const isTransactionDataReady = hasTransactionLoaded || hasSigningRequest
 

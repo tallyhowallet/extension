@@ -1,6 +1,11 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit"
 import Emittery from "emittery"
-import { MessageSigningRequest, SignTypedDataRequest } from "../utils/signing"
+import {
+  MessageSigningRequest,
+  PLUMESigningRequest,
+  PLUMESigningResponse,
+  SignTypedDataRequest,
+} from "../utils/signing"
 import { createBackgroundAsyncThunk } from "./utils"
 import { EnrichedSignTypedDataRequest } from "../services/enrichment"
 import { EIP712TypedData } from "../types"
@@ -20,6 +25,7 @@ export type SignOperationType =
   | SignTypedDataRequest
   | EIP1559TransactionRequest
   | LegacyEVMTransactionRequest
+  | PLUMESigningRequest
 
 /**
  * A request for a signing operation carrying the AccountSigner whose signature
@@ -39,6 +45,9 @@ type Events = {
   requestSignData: MessageSigningRequest & {
     accountSigner: AccountSigner
   }
+  requestSignPLUME: PLUMESigningRequest & {
+    accountSigner: AccountSigner
+  }
   signatureRejected: never
 }
 
@@ -50,6 +59,7 @@ type SigningState = {
 
   signedData: string | undefined
   signDataRequest: MessageSigningRequest | undefined
+  getPLUMESignatureRequest: PLUMESigningRequest | undefined
 
   additionalSigningStatus: "editing" | undefined
 }
@@ -60,6 +70,7 @@ export const initialState: SigningState = {
 
   signedData: undefined,
   signDataRequest: undefined,
+  getPLUMESignatureRequest: undefined,
 
   additionalSigningStatus: undefined,
 }
@@ -91,6 +102,17 @@ export const signData = createBackgroundAsyncThunk(
   },
 )
 
+export const signPLUME = createBackgroundAsyncThunk(
+  "signing/signPLUME",
+  async (data: SignOperation<PLUMESigningRequest>) => {
+    const { request, accountSigner } = data
+    await signingSliceEmitter.emit("requestSignPLUME", {
+      ...request,
+      accountSigner,
+    })
+  },
+)
+
 const signingSlice = createSlice({
   name: "signing",
   initialState,
@@ -114,6 +136,18 @@ const signingSlice = createSlice({
       ...state,
       signDataRequest: payload,
     }),
+    getPLUMESignatureRequest: (
+      state,
+      { payload }: { payload: PLUMESigningRequest },
+    ) => ({
+      ...state,
+      getPLUMESignatureRequest: payload,
+    }),
+    signedPLUME: (state, { payload }: { payload: PLUMESigningResponse }) => ({
+      ...state,
+      signedPLUME: payload,
+      getPLUMESignatureRequest: undefined,
+    }),
     signedData: (state, { payload }: { payload: string }) => ({
       ...state,
       signedData: payload,
@@ -124,6 +158,7 @@ const signingSlice = createSlice({
       typedDataRequest: undefined,
       signDataRequest: undefined,
       additionalSigningStatus: undefined,
+      getPLUMESignatureRequest: undefined,
     }),
     updateAdditionalSigningStatus: (
       state,
@@ -142,6 +177,8 @@ export const {
   signDataRequest,
   clearSigningState,
   updateAdditionalSigningStatus,
+  getPLUMESignatureRequest,
+  signedPLUME,
 } = signingSlice.actions
 
 export default signingSlice.reducer
@@ -153,6 +190,11 @@ export const selectTypedData = createSelector(
 
 export const selectSigningData = createSelector(
   (state: { signing: SigningState }) => state.signing.signDataRequest,
+  (signTypes) => signTypes,
+)
+
+export const selectPLUMESigningData = createSelector(
+  (state: { signing: SigningState }) => state.signing.getPLUMESignatureRequest,
   (signTypes) => signTypes,
 )
 

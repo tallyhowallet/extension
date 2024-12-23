@@ -6,11 +6,13 @@ type DataSignatureDetailsProps = {
   requestingSource?: string | undefined
   excludeTitle?: boolean
   children: ReactNode
+  alternativeTitle?: string
 }
 
 export default function DataSignatureDetails({
   requestingSource,
   excludeTitle = false,
+  alternativeTitle = undefined,
   children,
 }: DataSignatureDetailsProps): ReactElement {
   const { t } = useTranslation("translation", { keyPrefix: "signing" })
@@ -19,8 +21,11 @@ export default function DataSignatureDetails({
     <div className="primary_info_card standard_width">
       <div className="sign_block">
         <div className="container">
-          {!excludeTitle && (
+          {!excludeTitle && !alternativeTitle && (
             <div className="label header">{t("signatureRequired")}</div>
+          )}
+          {alternativeTitle && (
+            <div className="label header">{alternativeTitle}</div>
           )}
           <div
             className={classNames({ source: requestingSource !== undefined })}

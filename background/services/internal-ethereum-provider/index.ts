@@ -31,6 +31,8 @@ import {
   SignTypedDataRequest,
   MessageSigningRequest,
   parseSigningData,
+  PLUMESigningResponse,
+  PLUMESigningRequest,
 } from "../../utils/signing"
 import { getOrCreateDB, InternalEthereumProviderDatabase } from "./db"
 import { TAHO_INTERNAL_ORIGIN } from "./constants"
@@ -115,6 +117,10 @@ type Events = ServiceLifecycleEvents & {
   >
   signTypedDataRequest: DAppRequestEvent<SignTypedDataRequest, string>
   signDataRequest: DAppRequestEvent<MessageSigningRequest, string>
+  getPLUMESignatureRequest: DAppRequestEvent<
+    PLUMESigningRequest,
+    PLUMESigningResponse
+  >
   selectedNetwork: EVMNetwork
   watchAssetRequest: { contractAddress: string; network: EVMNetwork }
   // connect
@@ -183,6 +189,15 @@ export default class InternalEthereumProviderService extends BaseService<Events>
           },
           typedData: JSON.parse(params[1] as string),
         })
+      case "eth_getPlumeSignature":
+        return this.getPlumeSignature(
+          {
+            input: params[0] as string,
+            account: params[1] as string,
+            version: params[2] as string,
+          },
+          origin,
+        )
       case "eth_chainId":
         // TODO Decide on a better way to track whether a particular chain is
         // allowed to have an RPC call made to it. Ideally this would be based
@@ -584,6 +599,42 @@ export default class InternalEthereumProviderService extends BaseService<Events>
           },
           rawSigningData: hexInput,
           ...typeAndData,
+        },
+        resolver: resolve,
+        rejecter: reject,
+      })
+    })
+  }
+
+  private async getPlumeSignature(
+    {
+      input,
+      account,
+      version,
+    }: {
+      input: string
+      account: string
+      version?: string
+    },
+    origin: string,
+  ) {
+    const currentNetwork =
+      await this.getCurrentOrDefaultNetworkForOrigin(origin)
+    const plumeVersion = version !== undefined ? Number(version) : 2
+
+    if (plumeVersion < 1 || plumeVersion > 2) {
+      throw new Error("Unsupported PLUME version.")
+    }
+
+    return new Promise<PLUMESigningResponse>((resolve, reject) => {
+      this.emitter.emit("getPLUMESignatureRequest", {
+        payload: {
+          account: {
+            address: account,
+            network: currentNetwork,
+          },
+          rawSigningData: input,
+          plumeVersion,
         },
         resolver: resolve,
         rejecter: reject,
