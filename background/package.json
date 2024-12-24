@@ -58,6 +58,7 @@
     "dexie": "^3.0.4",
     "emittery": "^0.9.2",
     "ethers": "5.7.2",
+    "idriss-crypto": "^1.8.10",
     "immer": "^9.0.1",
     "jsondiffpatch": "^0.4.1",
     "lodash": "^4.17.21",

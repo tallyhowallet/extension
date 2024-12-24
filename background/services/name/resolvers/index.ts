@@ -3,6 +3,7 @@ import addressBookResolverFor from "./address-book"
 import knownContractResolverFor from "./known-contracts"
 import unsResolver from "./uns"
 import rnsResolver from "./rns"
+import idrissResolver from "./idriss"
 
 const resolvers = {
   ensResolverFor,
@@ -10,6 +11,7 @@ const resolvers = {
   knownContractResolverFor,
   unsResolver,
   rnsResolver,
+  idrissResolver,
 }
 
 type ResolverConstructors = ReturnType<
@@ -24,4 +26,5 @@ export {
   knownContractResolverFor,
   unsResolver,
   rnsResolver,
+  idrissResolver,
 }

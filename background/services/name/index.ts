@@ -18,6 +18,7 @@ import {
   ensResolverFor,
   unsResolver,
   rnsResolver,
+  idrissResolver,
 } from "./resolvers"
 import PreferenceService from "../preferences"
 import { isFulfilledPromise } from "../../lib/utils/type-guards"
@@ -123,6 +124,7 @@ export default class NameService extends BaseService<Events> {
       ensResolverFor(chainService),
       unsResolver(),
       rnsResolver(),
+      idrissResolver(),
     ]
 
     preferenceService.emitter.on(
