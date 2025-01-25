@@ -602,15 +602,25 @@ export default class ChainService extends BaseService<Events> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const anyError: any = error
 
-        if (
-          "code" in anyError &&
-          anyError.code === Logger.errors.UNPREDICTABLE_GAS_LIMIT
-        ) {
-          gasEstimationError = anyError.error ?? "Unknown transaction error."
+        if ("code" in anyError) {
+          if (anyError.code === Logger.errors.UNPREDICTABLE_GAS_LIMIT) {
+            gasEstimationError = anyError.error ?? "Unknown transaction error."
+          }
+
+          if (anyError.code === Logger.errors.INSUFFICIENT_FUNDS) {
+            gasEstimationError = anyError.error ?? "Insufficient funds error."
+
+            if (
+              "annotation" in transactionRequest &&
+              transactionRequest.annotation !== undefined
+            ) {
+              transactionRequest.annotation.warnings ??= []
+              transactionRequest.annotation.warnings.push("insufficient-funds")
+            }
+          }
         }
       }
     }
-
     // We use the estimate as the actual limit only if user did not specify the
     // gas explicitly or if it was set below the minimum network-allowed value.
     if (

@@ -248,10 +248,6 @@ export default async function resolveTransactionAnnotation(
     if (!txAnnotation.warnings.includes("insufficient-funds")) {
       txAnnotation.warnings.push("insufficient-funds")
     }
-  } else {
-    txAnnotation.warnings = txAnnotation.warnings.filter(
-      (warning) => warning !== "insufficient-funds",
-    )
   }
 
   // If the transaction has been mined, get the block and set the timestamp
