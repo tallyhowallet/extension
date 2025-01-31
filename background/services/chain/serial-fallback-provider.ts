@@ -69,9 +69,7 @@ const PRIMARY_PROVIDER_RECONNECT_INTERVAL = 10 * SECOND
 const WAIT_BEFORE_SUBSCRIBING = 2 * SECOND
 // Wait 100ms before attempting another send if a websocket provider is still connecting.
 const WAIT_BEFORE_SEND_AGAIN = 100
-// How long before a cached balance is considered stale
-const BALANCE_TTL = 1 * SECOND
-// How often to cleanup our hasCode and balance caches.
+// How often to check and clean stale cache entries
 const CACHE_CLEANUP_INTERVAL = 10 * SECOND
 // How long to wait for a provider to respond before falling back to the next provider.
 const PROVIDER_REQUEST_TIMEOUT = 5 * SECOND
@@ -93,6 +91,39 @@ function waitAnd<T, E extends Promise<T>>(
       resolve(fn())
     }, waitMs)
   })
+}
+
+function getCacheKey(method: string, params: unknown) {
+  return `${method}::${JSON.stringify(params, (_k, val) => {
+    if (val === null) {
+      return null
+    }
+
+    if (typeof val === "bigint") {
+      return `bigint:${val}`
+    }
+
+    if (typeof val === "string") {
+      return val.toLowerCase()
+    }
+
+    if (typeof val === "object" && !Array.isArray(val)) {
+      const keys = Object.keys(val)
+      keys.sort()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return keys.reduce<any>((acc, key) => {
+        acc[key] = val[key]
+        return acc
+      }, {})
+    }
+
+    return val
+  })}`
+}
+
+type CacheEntry = {
+  result: unknown
+  updatedAt: number
 }
 
 /**
@@ -212,6 +243,28 @@ export default class SerialFallbackProvider extends JsonRpcProvider {
   private cachedProvidersByIndex: Record<string, JsonRpcProvider | undefined> =
     {}
 
+  #sendCache = new Map<string, CacheEntry>()
+
+  #cacheSettings = new Map<string, number>(
+    Object.entries({
+      // TEMPORARY cache for latest account balances to reduce number of rpc calls
+      // This is intended as a temporary fix to the burst of account enrichment that
+      // happens when the extension is first loaded up as a result of activity emission
+      // inside of chainService.connectChainService
+      eth_getBalance: 1 * SECOND,
+
+      // TEMPORARY cache for if an address has code to reduce number of rpc calls
+      // This is intended as a temporary fix to the burst of account enrichment that
+      // happens when the extension is first loaded up as a result of activity emission
+      // inside of chainService.connectChainService
+      // This cache will get reset every time the service worker reactivates and the property of having code update is quite rare.
+
+      eth_getCode: 600 * SECOND,
+      eth_blockNumber: 10 * SECOND,
+      eth_chainId: 3600 * SECOND,
+    }),
+  )
+
   /**
    * This object holds all messages that are either being sent to a provider
    * and waiting for a response, or are in the process of being backed off due
@@ -260,29 +313,6 @@ export default class SerialFallbackProvider extends JsonRpcProvider {
   // During max size update, this value is set so that the value is not
   // decreased by multiple failed requests.
   private forcedBatchMaxPreviousSize: number = 0
-
-  // TEMPORARY cache for latest account balances to reduce number of rpc calls
-  // This is intended as a temporary fix to the burst of account enrichment that
-  // happens when the extension is first loaded up as a result of activity emission
-  // inside of chainService.connectChainService
-  private latestBalanceCache: {
-    [address: string]: {
-      balance: string
-      updatedAt: number
-    }
-  } = {}
-
-  // TEMPORARY cache for if an address has code to reduce number of rpc calls
-  // This is intended as a temporary fix to the burst of account enrichment that
-  // happens when the extension is first loaded up as a result of activity emission
-  // inside of chainService.connectChainService
-  // There is no TTL here as the cache will get reset every time the extension is
-  // reloaded and the property of having code updates quite rarely.
-  private latestHasCodeCache: {
-    [address: string]: {
-      hasCode: boolean
-    }
-  } = {}
 
   // Information on WebSocket-style subscriptions. Tracked here so as to
   // restore them in case of WebSocket disconnects.
@@ -369,7 +399,7 @@ export default class SerialFallbackProvider extends JsonRpcProvider {
     if (typeof cachedResult !== "undefined") {
       // Cache hit! - return early
       delete this.messagesToSend[messageId]
-      return cachedResult
+      return cachedResult.result
     }
 
     if (this.forcedBatchMaxPromise) {
@@ -613,20 +643,11 @@ export default class SerialFallbackProvider extends JsonRpcProvider {
     result: unknown,
     { method, params }: { method: string; params: unknown },
   ): void {
-    if (method === "eth_getBalance" && (params as string[])[1] === "latest") {
-      const address = (params as string[])[0]
-      this.latestBalanceCache[address] = {
-        balance: result as string,
+    if (this.#cacheSettings.has(method)) {
+      this.#sendCache.set(getCacheKey(method, params), {
         updatedAt: Date.now(),
-      }
-    }
-
-    // @TODO Remove once initial activity load is refactored.
-    if (method === "eth_getCode" && (params as string[])[1] === "latest") {
-      const address = (params as string[])[0]
-      this.latestHasCodeCache[address] = {
-        hasCode: result as boolean,
-      }
+        result,
+      })
     }
   }
 
@@ -641,22 +662,14 @@ export default class SerialFallbackProvider extends JsonRpcProvider {
   private checkForCachedResult(
     method: string,
     params: unknown,
-  ): string | boolean | undefined {
-    // @TODO Remove once initial activity load is refactored.
-    if (method === "eth_getBalance" && (params as string[])[1] === "latest") {
-      const address = (params as string[])[0]
-      const now = Date.now()
-      const lastUpdate = this.latestBalanceCache[address]?.updatedAt
-      if (lastUpdate && now < lastUpdate + BALANCE_TTL) {
-        return this.latestBalanceCache[address].balance
-      }
-    }
+  ): CacheEntry | undefined {
+    const ttl = this.#cacheSettings.get(method)
 
-    // @TODO Remove once initial activity load is refactored.
-    if (method === "eth_getCode" && (params as string[])[1] === "latest") {
-      const address = (params as string[])[0]
-      if (typeof this.latestHasCodeCache[address] !== "undefined") {
-        return this.latestHasCodeCache[address].hasCode
+    if (typeof ttl !== "undefined") {
+      const entry = this.#sendCache.get(getCacheKey(method, params))
+
+      if (entry && ttl + entry.updatedAt > Date.now()) {
+        return entry
       }
     }
 
@@ -665,29 +678,24 @@ export default class SerialFallbackProvider extends JsonRpcProvider {
 
   /**
    * Cache cleanup to mitigate unbounded growth of our hasCode and balance caches.
-   * @TODO remove this method once loading of initial activities is refactored.
    */
   cleanupStaleCacheEntries(): void {
-    const balanceCache = Object.entries(this.latestBalanceCache)
-    const hasCodeCache = Object.keys(this.latestHasCodeCache)
-    if (balanceCache.length > 0) {
-      logger.info(
-        `Cleaning up ${this.network.chainId} balance cache, ${balanceCache.length} entries`,
-      )
-      const now = Date.now()
-      balanceCache.forEach(([address, balance]) => {
-        if (balance.updatedAt < now - BALANCE_TTL) {
-          delete this.latestBalanceCache[address]
-        }
-      })
-    }
+    let counter = 0
 
-    if (hasCodeCache.length > 0) {
-      logger.info(
-        `Cleaning up ${this.network.chainId} hasCode cache, ${hasCodeCache.length} entries`,
-      )
+    this.#sendCache.forEach((value, key) => {
+      const method = key.split("::")[0]
+      const ttl = this.#cacheSettings.get(method)
 
-      this.latestHasCodeCache = {}
+      if (ttl && value.updatedAt + ttl < Date.now()) {
+        this.#sendCache.delete(key)
+        counter += 1
+      }
+    })
+
+    if (counter > 0) {
+      logger.info(
+        `Cleaning up ${counter} cache entries on RPC for chain id: ${this.network.chainId}`,
+      )
     }
   }
 
